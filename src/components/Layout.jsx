@@ -9,6 +9,8 @@ import Logo from "../../assets/Logo.png";
 export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [activeItem, setActiveItem] = useState('Dashboard'); // Track active item
+  const [activeProject, setActiveProject] = useState('Design Project'); // Track active project
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -19,7 +21,7 @@ export default function Layout({ children }) {
             initial={{ x: -280 }}
             animate={{
               x: 0,
-              width: sidebarCollapsed ? 80 : 256,
+              width: sidebarCollapsed ? 72 : 256, // Reduced collapsed width to 72px for minimal look
             }}
             exit={{ x: -280 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
@@ -47,34 +49,37 @@ export default function Layout({ children }) {
                 <img
                   src={Logo}
                   alt="TaskBoard"
-                  className="w-8 h-8 rounded-lg object-contain mx-auto"
+                  className="w-7 h-7 rounded-lg object-contain mx-auto"
                 />
               )}
 
               {/* Desktop Collapse Button - Top Right */}
-              <button
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="hidden lg:flex p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-                title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              >
-                {sidebarCollapsed ? (
-                  <PanelLeftOpen className="w-5 h-5 text-gray-600" />
-                ) : (
+              {!sidebarCollapsed && (
+                <button
+                  onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                  className="hidden lg:flex p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Collapse sidebar"
+                >
                   <PanelLeftClose className="w-5 h-5 text-gray-600" />
-                )}
-              </button>
-
-              {/* Mobile Close Button */}
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="lg:hidden p-1.5 hover:bg-gray-100 rounded-lg"
-              >
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
+                </button>
+              )}
             </div>
 
+            {/* Collapsed Expand Button */}
+            {sidebarCollapsed && (
+              <div className="hidden lg:flex justify-center pt-4 pb-2">
+                <button
+                  onClick={() => setSidebarCollapsed(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Expand sidebar"
+                >
+                  <PanelLeftOpen className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+            )}
+
             {/* Add New Button */}
-            <div className={`px-4 py-4 ${sidebarCollapsed ? 'flex justify-center' : ''}`}>
+            <div className={`px-4 py-4 ${sidebarCollapsed ? 'flex justify-center px-2' : ''}`}>
               <button
                 className={`flex items-center justify-center gap-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors ${
                   sidebarCollapsed
@@ -82,7 +87,7 @@ export default function Layout({ children }) {
                     : 'w-full py-2.5'
                 }`}
               >
-                <Plus className="w-5 h-5 flex-shrink-0" />
+                <Plus className="w-5 h-5 shrink-0" />
                 {!sidebarCollapsed && (
                   <motion.span
                     initial={{ opacity: 0 }}
@@ -97,27 +102,35 @@ export default function Layout({ children }) {
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
+            <nav className={`flex-1 space-y-1 overflow-y-auto ${sidebarCollapsed ? 'px-2' : 'px-4'}`}>
               <NavItem
                 icon={LayoutDashboard}
                 label="Dashboard"
                 collapsed={sidebarCollapsed}
+                active={activeItem === 'Dashboard'}
+                onClick={() => setActiveItem('Dashboard')}
               />
               <NavItem
                 icon={Inbox}
                 label="Inbox"
                 badge={3}
                 collapsed={sidebarCollapsed}
+                active={activeItem === 'Inbox'}
+                onClick={() => setActiveItem('Inbox')}
               />
               <NavItem
                 icon={Users}
                 label="Teams"
                 collapsed={sidebarCollapsed}
+                active={activeItem === 'Teams'}
+                onClick={() => setActiveItem('Teams')}
               />
               <NavItem
                 icon={Settings}
                 label="Settings"
                 collapsed={sidebarCollapsed}
+                active={activeItem === 'Settings'}
+                onClick={() => setActiveItem('Settings')}
               />
 
               {/* Projects Section */}
@@ -137,9 +150,21 @@ export default function Layout({ children }) {
                     </button>
                   </div>
 
-                  <ProjectItem name="Design Project" active />
-                  <ProjectItem name="Carl UI/UX" />
-                  <ProjectItem name="Hajime Illustrations" />
+                  <ProjectItem
+                    name="Design Project"
+                    active={activeProject === 'Design Project'}
+                    onClick={() => setActiveProject('Design Project')}
+                  />
+                  <ProjectItem
+                    name="Carl UI/UX"
+                    active={activeProject === 'Carl UI/UX'}
+                    onClick={() => setActiveProject('Carl UI/UX')}
+                  />
+                  <ProjectItem
+                    name="Hajime Illustrations"
+                    active={activeProject === 'Hajime Illustrations'}
+                    onClick={() => setActiveProject('Hajime Illustrations')}
+                  />
                 </motion.div>
               )}
             </nav>
@@ -166,18 +191,18 @@ export default function Layout({ children }) {
 
             {/* Collapsed Footer Icons */}
             {sidebarCollapsed && (
-              <div className="hidden lg:flex flex-col items-center gap-2 p-4 border-t border-gray-200">
+              <div className="hidden lg:flex flex-col items-center gap-2 p-2 border-t border-gray-200">
                 <button
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                   title="Invite Team"
                 >
-                  <Users className="w-5 h-5 text-gray-600" />
+                  <Users className="w-4 h-4 text-gray-600" />
                 </button>
                 <button
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                   title="Help"
                 >
-                  <HelpCircle className="w-5 h-5 text-gray-600" />
+                  <HelpCircle className="w-4 h-4 text-gray-600" />
                 </button>
               </div>
             )}
@@ -209,7 +234,7 @@ export default function Layout({ children }) {
 
           {/* Center: Search Bar */}
           <div className="flex-1 flex justify-center px-4">
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg w-full max-w-md border border-gray-300/60 text-lg">
+            <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg w-full max-w-md border border-gray-300/60">
               <input
                 type="text"
                 placeholder="Search Task..."
@@ -239,21 +264,26 @@ export default function Layout({ children }) {
   );
 }
 
-// Nav Item Component
-function NavItem({ icon: Icon, label, badge, collapsed }) {
+// Nav Item Component with Active State
+function NavItem({ icon: Icon, label, badge, collapsed, active, onClick }) {
   return (
     <button
-      className="w-full flex items-center justify-between px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg group"
+      onClick={onClick}
+      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg group transition-colors ${
+        active
+          ? 'bg-blue-50 text-blue-600'
+          : 'text-gray-700 hover:bg-gray-100'
+      } ${collapsed ? 'justify-center' : ''}`}
       title={collapsed ? label : ""}
     >
       <div className="flex items-center gap-3">
-        <Icon className="w-5 h-5 text-gray-500 group-hover:text-gray-700" />
+        <Icon className={`w-5 h-5 ${active ? 'text-blue-600' : 'text-gray-500 group-hover:text-gray-700'}`} />
         {!collapsed && (
           <motion.span
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="text-sm font-medium"
+            className={`text-sm font-medium ${active ? 'text-blue-600' : ''}`}
           >
             {label}
           </motion.span>
@@ -273,17 +303,18 @@ function NavItem({ icon: Icon, label, badge, collapsed }) {
   );
 }
 
-// Project Item Component
-function ProjectItem({ name, active }) {
+// Project Item Component with Active State
+function ProjectItem({ name, active, onClick }) {
   return (
     <button
-      className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg ${
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors ${
         active
           ? "bg-blue-50 text-blue-600 font-medium"
           : "text-gray-700 hover:bg-gray-100"
       }`}
     >
-      <div className="w-1.5 h-1.5 rounded-full bg-current" />
+      <div className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-blue-600' : 'bg-gray-400'}`} />
       <span>{name}</span>
     </button>
   );
