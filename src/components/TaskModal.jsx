@@ -57,13 +57,13 @@ export default function TaskModal({
       newErrors.title = "Title is required";
     }
 
-    // if (!formData.user_id) {
-    //   newErrors.user_id = 'Please assign a user'
-    // }
+    if (!formData.user_id) {
+      newErrors.user_id = 'Please assign a user'
+    }
 
-    // if (!formData.project_id) {
-    //   newErrors.project_id = 'Please select a project'
-    // }
+    if (!formData.project_id) {
+      newErrors.project_id = 'Please select a project'
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
