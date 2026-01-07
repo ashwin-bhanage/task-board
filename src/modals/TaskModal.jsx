@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, Calendar as CalendarIcon, User, Flag, Book } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { taskAPI } from "../services/api";
+import { taskAPI } from "../services/api.js";
 
 export default function TaskModal({
   isOpen,
