@@ -327,7 +327,7 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
           <div className="flex gap-6 p-6 min-w-max h-full">
             <KanbanColumn
               title="Pending"
-              icon={<CalendarClock className="w-4 h-4" />}
+              icon={<CalendarClock className="w-4 h-4 text-amber-500" />}
               tasks={tasksByStatus.pending}
               users={users}
               onAddTask={() => handleAddTask("pending")}
@@ -335,21 +335,19 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
             />
             <KanbanColumn
               title="In Progress"
-              icon={<Loader className="w-4 h-4" />}
+              icon={<Loader className="w-4 h-4 text-blue-600" />}
               tasks={tasksByStatus.in_progress}
               users={users}
               onAddTask={() => handleAddTask("in_progress")}
               onEditTask={handleEditTask}
-              statusColor="yellow"
             />
             <KanbanColumn
               title="Completed"
-              icon={<CircleCheckBig className="w-4 h-4" />}
+              icon={<CircleCheckBig className="w-4 h-4 text-green-600" />}
               tasks={tasksByStatus.completed}
               users={users}
               onAddTask={() => handleAddTask("completed")}
               onEditTask={handleEditTask}
-              statusColor="green"
             />
           </div>
         </div>
@@ -529,7 +527,7 @@ function TaskCard({ task, users, onEdit }) {
         <div className="flex items-center gap-2">
           {assignedUser ? (
             <>
-              <div className="w-5 h-5 lg:w-6 lg:h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+              <div className="w-5 h-5 lg:w-6 lg:h-6 bg-linear-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
                 {assignedUser.name[0].toUpperCase()}
               </div>
               <span className="text-xs text-gray-600 truncate">
