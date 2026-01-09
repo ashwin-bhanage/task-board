@@ -183,13 +183,6 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
             </button>
 
             <div className="relative">
-              <button
-                onClick={() => setShowBoardAddMenu(!showBoardAddMenu)}
-                className="px-3 lg:px-4 py-1.5 lg:py-2 text-xs lg:text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 flex items-center gap-2 whitespace-nowrap"
-              >
-                <Plus className="w-3 h-3 lg:w-4 lg:h-4" />
-                Add New
-              </button>
 
               {showBoardAddMenu && (
                 <>
