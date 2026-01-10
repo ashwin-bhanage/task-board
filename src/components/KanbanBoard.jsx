@@ -92,11 +92,11 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
     // Close the modal first
     setIsModalOpen(false);
     setEditingTask(null);
-    
+
     // Refetch data with a small delay to ensure backend consistency
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     await fetchData();
-    
+
     // Notify parent component
     if (onDataUpdate) onDataUpdate();
   };

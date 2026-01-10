@@ -88,7 +88,7 @@ export default function TaskModal({
 
       // Wait a brief moment to ensure the backend has processed the request
       await new Promise(resolve => setTimeout(resolve, 300));
-      
+
       onSuccess();
       onClose();
     } catch (error) {
