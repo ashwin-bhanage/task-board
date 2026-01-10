@@ -41,10 +41,11 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [showBoardAddMenu, setShowBoardAddMenu] = useState(false);
   const [filters, setFilters] = useState({
-    assignee: "All",
-    priority: "All",
-    dateRange: "All",
+    assignee: null,
+    priority: null,
+    dateRange: null,
   });
+  const [showFilterDropdown, setShowFilterDropdown] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
@@ -87,8 +88,16 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
     setIsModalOpen(true);
   };
 
-  const handleModalSuccess = () => {
-    fetchData();
+  const handleModalSuccess = async () => {
+    // Close the modal first
+    setIsModalOpen(false);
+    setEditingTask(null);
+    
+    // Refetch data with a small delay to ensure backend consistency
+    await new Promise(resolve => setTimeout(resolve, 100));
+    await fetchData();
+    
+    // Notify parent component
     if (onDataUpdate) onDataUpdate();
   };
 
@@ -131,6 +140,39 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
     in_progress: tasks.filter((t) => t.status === "in_progress"),
     completed: tasks.filter((t) => t.status === "completed"),
   };
+
+  // Filter logic
+  const filteredTasksByStatus = {
+    pending: filterTasks(tasksByStatus.pending),
+    in_progress: filterTasks(tasksByStatus.in_progress),
+    completed: filterTasks(tasksByStatus.completed),
+  };
+
+  function filterTasks(tasks) {
+    return tasks.filter((task) => {
+      if (filters.assignee && task.user_id !== filters.assignee) return false;
+      if (filters.priority && task.priority !== filters.priority) return false;
+      if (filters.dateRange) {
+        const today = new Date();
+        const dueDate = task.due_date ? new Date(task.due_date) : null;
+
+        if (filters.dateRange === "overdue" && (!dueDate || dueDate >= today))
+          return false;
+        if (
+          filters.dateRange === "today" &&
+          (!dueDate || dueDate.toDateString() !== today.toDateString())
+        )
+          return false;
+        if (filters.dateRange === "week") {
+          const weekFromNow = new Date(
+            today.getTime() + 7 * 24 * 60 * 60 * 1000
+          );
+          if (!dueDate || dueDate > weekFromNow) return false;
+        }
+      }
+      return true;
+    });
+  }
 
   if (loading) {
     return (
@@ -211,73 +253,56 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
               />
             </div>
 
-            <div className="hidden md:flex items-center gap-2 lg:gap-3 overflow-x-auto">
+            <div className="flex items-center gap-2 lg:gap-3 overflow-visible flex-wrap">
               <FilterButton
                 icon={Calendar}
                 label="Due Date"
                 value={filters.dateRange}
+                options={[
+                  { value: "today", label: "Today" },
+                  { value: "week", label: "This Week" },
+                  { value: "overdue", label: "Overdue" },
+                ]}
+                filterKey="dateRange"
+                filters={filters}
+                setFilters={setFilters}
+                showDropdown={showFilterDropdown}
+                setShowDropdown={setShowFilterDropdown}
               />
               <FilterButton
                 icon={User}
                 label="Assignee"
-                value={filters.assignee}
+                value={
+                  filters.assignee
+                    ? users.find((u) => u.id === filters.assignee)?.name
+                    : null
+                }
+                options={users.map((u) => ({ value: u.id, label: u.name }))}
+                filterKey="assignee"
+                filters={filters}
+                setFilters={setFilters}
+                showDropdown={showFilterDropdown}
+                setShowDropdown={setShowFilterDropdown}
               />
               <FilterButton
                 icon={Filter}
                 label="Priority"
                 value={filters.priority}
+                options={[
+                  { value: "Low", label: "Low" },
+                  { value: "Normal", label: "Normal" },
+                  { value: "High", label: "High" },
+                ]}
+                filterKey="priority"
+                filters={filters}
+                setFilters={setFilters}
+                showDropdown={showFilterDropdown}
+                setShowDropdown={setShowFilterDropdown}
               />
               <button className="flex items-center gap-2 px-2 lg:px-3 py-1.5 lg:py-2 text-xs lg:text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 whitespace-nowrap">
                 <Filter className="w-3 h-3 lg:w-4 lg:h-4" />
                 <span className="hidden lg:inline">Advance Filters</span>
               </button>
-
-              <div className="relative">
-                {showBoardAddMenu && (
-                  <>
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50 w-40 lg:w-48"
-                    >
-                      <button
-                        onClick={() => {
-                          handleAddTask("pending");
-                          setShowBoardAddMenu(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        <ListTodoIcon className="w-4 h-4" />
-                        <span>Add Task</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsUserModalOpen(true);
-                          setShowBoardAddMenu(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        <UserRound className="w-4 h-4" />
-                        <span>Add User</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsProjectModalOpen(true);
-                          setShowBoardAddMenu(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        <LayoutDashboard className="w-4 h-4" />
-                        <span>Add Project</span>
-                      </button>
-                    </motion.div>
-                    <div
-                      onClick={() => setShowBoardAddMenu(false)}
-                      className="fixed inset-0 z-40"
-                    />
-                  </>
-                )}
-              </div>
             </div>
 
             <div className="md:hidden">
@@ -366,7 +391,7 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
                 id="pending"
                 title="Pending"
                 icon={<CalendarClock className="w-4 h-4 text-amber-500" />}
-                tasks={tasksByStatus.pending}
+                tasks={filteredTasksByStatus.pending}
                 users={users}
                 onAddTask={() => handleAddTask("pending")}
                 onEditTask={handleEditTask}
@@ -375,7 +400,7 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
                 id="in_progress"
                 title="In Progress"
                 icon={<Loader className="w-4 h-4 text-blue-600" />}
-                tasks={tasksByStatus.in_progress}
+                tasks={filteredTasksByStatus.in_progress}
                 users={users}
                 onAddTask={() => handleAddTask("in_progress")}
                 onEditTask={handleEditTask}
@@ -385,7 +410,7 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
                 id="completed"
                 title="Completed"
                 icon={<CircleCheckBig className="w-4 h-4 text-green-600" />}
-                tasks={tasksByStatus.completed}
+                tasks={filteredTasksByStatus.completed}
                 users={users}
                 onAddTask={() => handleAddTask("completed")}
                 onEditTask={handleEditTask}
@@ -396,17 +421,32 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
         </div>
       </div>
       {/* NEW: DragOverlay */}
-  <DragOverlay>
-    {activeId ? (
-      <div className="opacity-80 rotate-3 cursor-grabbing scale-105 transition-transform">
-        <TaskCard
-          task={tasks.find((t) => t.id === activeId)}
-          users={users}
-          onEdit={() => {}}
-        />
-      </div>
-    ) : null}
-  </DragOverlay>
+      <DragOverlay>
+        {activeId ? (
+          <div className="opacity-80 rotate-3 cursor-grabbing scale-105 transition-transform">
+            <TaskCard
+              task={tasks.find((t) => t.id === activeId)}
+              users={users}
+              onEdit={() => {}}
+            />
+          </div>
+        ) : null}
+      </DragOverlay>
+
+      {/* Task Modal */}
+      <TaskModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingTask(null);
+        }}
+        onSuccess={handleModalSuccess}
+        task={editingTask}
+        projects={projects}
+        users={users}
+        newStatus={newTaskStatus}
+        projectId={selectedProject?.id}
+      />
     </DndContext>
   );
 }
@@ -509,9 +549,11 @@ function DraggableTask({ task, users, onEdit }) {
     });
 
   const style = {
-        transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
-        opacity: isDragging ? 0 : 1,
-      }
+    transform: transform
+      ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+      : undefined,
+    opacity: isDragging ? 0 : 1,
+  };
 
   const assignedUser = users.find((u) => u.id === task.user_id);
 
@@ -589,14 +631,73 @@ function TabButton({ label, active, onClick }) {
   );
 }
 
-function FilterButton({ icon: Icon, label, value }) {
+function FilterButton({
+  icon: Icon,
+  label,
+  value,
+  options,
+  filterKey,
+  filters,
+  setFilters,
+  showDropdown,
+  setShowDropdown,
+}) {
+  const displayValue = value || "All";
+
   return (
-    <button className="flex items-center gap-1 lg:gap-2 px-2 lg:px-3 py-1.5 lg:py-2 text-xs lg:text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 whitespace-nowrap">
-      <Icon className="w-3 h-3 lg:w-4 lg:h-4" />
-      <span className="hidden lg:inline">{label}</span>
-      <span className="text-gray-500 hidden xl:inline">{value}</span>
-      <ChevronDown className="w-3 h-3 lg:w-4 lg:h-4 text-gray-400" />
-    </button>
+    <div className="relative">
+      <button
+        onClick={() =>
+          setShowDropdown(showDropdown === filterKey ? null : filterKey)
+        }
+        className="flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+      >
+        <Icon className="w-4 h-4 shrink-0" />
+        <span className="hidden sm:inline whitespace-nowrap">{label}</span>
+        <span className="text-gray-500 text-xs hidden sm:inline whitespace-nowrap">
+          {displayValue}
+        </span>
+        <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
+      </button>
+
+      {showDropdown === filterKey && (
+        <>
+          <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50 min-w-[160px]">
+            <button
+              onClick={() => {
+                setFilters({ ...filters, [filterKey]: null });
+                setShowDropdown(null);
+              }}
+              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                !value ? "text-blue-600 font-medium" : "text-gray-700"
+              }`}
+            >
+              All
+            </button>
+            {options.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => {
+                  setFilters({ ...filters, [filterKey]: option.value });
+                  setShowDropdown(null);
+                }}
+                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                  value === option.value
+                    ? "text-blue-600 font-medium"
+                    : "text-gray-700"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <div
+            onClick={() => setShowDropdown(null)}
+            className="fixed inset-0 z-40"
+          />
+        </>
+      )}
+    </div>
   );
 }
 
