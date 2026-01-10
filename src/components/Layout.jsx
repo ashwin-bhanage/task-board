@@ -65,7 +65,9 @@ export default function Layout({ children, users, projects, onDataUpdate, onProj
                     alt="TaskBoard Logo"
                     className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg object-contain"
                   />
-                  <span className="font-semibold text-gray-900 text-sm lg:text-base">TaskBoard</span>
+                  <span className="font-semibold text-gray-900 text-sm lg:text-base">
+                    TaskBoard
+                  </span>
                 </motion.div>
               )}
 
@@ -107,11 +109,15 @@ export default function Layout({ children, users, projects, onDataUpdate, onProj
               </div>
             )}
 
-            <div className={`px-3 lg:px-4 py-3 lg:py-4 ${sidebarCollapsed ? 'flex justify-center px-2' : ''} relative`}>
+            <div
+              className={`px-3 lg:px-4 py-3 lg:py-4 ${
+                sidebarCollapsed ? "flex justify-center px-2" : ""
+              } relative`}
+            >
               <button
                 onClick={() => setShowAddMenu(!showAddMenu)}
-                className={`flex items-center justify-center gap-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors ${
-                  sidebarCollapsed ? 'w-10 h-10 p-0' : 'w-full py-2 lg:py-2.5'
+                className={`flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-sm hover:shadow-md ${
+                  sidebarCollapsed ? "w-10 h-10 p-0" : "w-full py-2 lg:py-2.5"
                 }`}
               >
                 <Plus className="w-4 h-4 lg:w-5 lg:h-5 shrink-0" />
@@ -120,33 +126,50 @@ export default function Layout({ children, users, projects, onDataUpdate, onProj
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="font-medium text-sm lg:text-base"
+                    className="font-semibold text-sm lg:text-base"
                   >
                     Add New
                   </motion.span>
                 )}
               </button>
 
-              {showAddMenu && !sidebarCollapsed && (
+              {showAddMenu && (
                 <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute top-full left-3 right-3 lg:left-4 lg:right-4 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50"
+                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  transition={{ duration: 0.15 }}
+                  className={`absolute bg-white border border-gray-200 rounded-lg shadow-xl py-1 z-50 ${
+                    sidebarCollapsed
+                      ? "left-14 top-2 w-56"
+                      : "left-3 right-3 lg:left-4 lg:right-4 top-full mt-2 w-auto"
+                  }`}
                 >
                   <button
-                    onClick={() => handleAddMenuClick('user')}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    onClick={() => handleAddMenuClick("user")}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0"
                   >
-                    <UserRound className="w-4 h-4" />
-                    <span>Add User</span>
+                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <UserRound className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium text-gray-900">Add User</p>
+                      <p className="text-xs text-gray-500">
+                        Create new team member
+                      </p>
+                    </div>
                   </button>
                   <button
-                    onClick={() => handleAddMenuClick('project')}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    onClick={() => handleAddMenuClick("project")}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-purple-50 transition-colors"
                   >
-                    <LayoutDashboard className="w-4 h-4" />
-                    <span>Add Project</span>
+                    <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <LayoutDashboard className="w-4 h-4 text-purple-600" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium text-gray-900">Add Project</p>
+                      <p className="text-xs text-gray-500">Start new project</p>
+                    </div>
                   </button>
                 </motion.div>
               )}
@@ -159,35 +182,39 @@ export default function Layout({ children, users, projects, onDataUpdate, onProj
               />
             )}
 
-            <nav className={`flex-1 space-y-1 overflow-y-auto ${sidebarCollapsed ? 'px-2' : 'px-3 lg:px-4'}`}>
+            <nav
+              className={`flex-1 space-y-1 overflow-y-auto ${
+                sidebarCollapsed ? "px-2" : "px-3 lg:px-4"
+              }`}
+            >
               <NavItem
                 icon={LayoutDashboard}
                 label="Dashboard"
                 collapsed={sidebarCollapsed}
-                active={activeItem === 'Dashboard'}
-                onClick={() => setActiveItem('Dashboard')}
+                active={activeItem === "Dashboard"}
+                onClick={() => setActiveItem("Dashboard")}
               />
               <NavItem
                 icon={Inbox}
                 label="Inbox"
                 badge={3}
                 collapsed={sidebarCollapsed}
-                active={activeItem === 'Inbox'}
-                onClick={() => setActiveItem('Inbox')}
+                active={activeItem === "Inbox"}
+                onClick={() => setActiveItem("Inbox")}
               />
               <NavItem
                 icon={Users}
                 label="Teams"
                 collapsed={sidebarCollapsed}
-                active={activeItem === 'Teams'}
-                onClick={() => setActiveItem('Teams')}
+                active={activeItem === "Teams"}
+                onClick={() => setActiveItem("Teams")}
               />
               <NavItem
                 icon={Settings}
                 label="Settings"
                 collapsed={sidebarCollapsed}
-                active={activeItem === 'Settings'}
-                onClick={() => setActiveItem('Settings')}
+                active={activeItem === "Settings"}
+                onClick={() => setActiveItem("Settings")}
               />
 
               {!sidebarCollapsed && (
@@ -216,14 +243,14 @@ export default function Layout({ children, users, projects, onDataUpdate, onProj
                     {projectsExpanded && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
+                        animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.2 }}
                         className="overflow-hidden"
                       >
                         <div className="space-y-1 mt-2">
                           {projects && projects.length > 0 ? (
-                            projects.map(project => (
+                            projects.map((project) => (
                               <ProjectItem
                                 key={project.id}
                                 name={project.name}
@@ -237,7 +264,9 @@ export default function Layout({ children, users, projects, onDataUpdate, onProj
                               />
                             ))
                           ) : (
-                            <p className="px-3 py-2 text-xs text-gray-400">No projects yet</p>
+                            <p className="px-3 py-2 text-xs text-gray-400">
+                              No projects yet
+                            </p>
                           )}
                         </div>
                       </motion.div>

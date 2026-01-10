@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { X, Calendar as CalendarIcon, User, Flag, Book } from "lucide-react";
+import {
+  X,
+  Calendar as CalendarIcon,
+  User,
+  Flag,
+  Book,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { taskAPI } from "../services/api.js";
 
@@ -10,6 +18,8 @@ export default function TaskModal({
   users,
   projects,
   onSuccess,
+  newStatus,
+  projectId,
 }) {
   const [formData, setFormData] = useState({
     user_id: "",
@@ -37,10 +47,10 @@ export default function TaskModal({
     } else {
       setFormData({
         user_id: "",
-        project_id: projects?.[0]?.id || "",
+        project_id: projectId || projects?.[0]?.id || "",
         title: "",
         description: "",
-        status: "pending",
+        status: newStatus || "pending",
         priority: "Normal",
         due_date: "",
       });
@@ -51,8 +61,8 @@ export default function TaskModal({
   const validate = () => {
     const newErrors = {};
     if (!formData.title.trim()) newErrors.title = "Title is required";
-    if (!formData.user_id) newErrors.user_id = 'Please assign a user';
-    if (!formData.project_id) newErrors.project_id = 'Please select a project';
+    if (!formData.user_id) newErrors.user_id = "Please assign a user";
+    if (!formData.project_id) newErrors.project_id = "Please select a project";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -76,6 +86,9 @@ export default function TaskModal({
         await taskAPI.create(submitData);
       }
 
+      // Wait a brief moment to ensure the backend has processed the request
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
       onSuccess();
       onClose();
     } catch (error) {
@@ -114,16 +127,23 @@ export default function TaskModal({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden"
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden border border-gray-100"
             >
               {/* Modal Header */}
-              <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200 shrink-0">
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-                  {task ? "Edit Task" : "Create New Task"}
-                </h2>
+              <div className="flex items-center justify-between px-4 py-4 sm:px-6 sm:py-5 border-b border-gray-100 shrink-0 bg-gradient-to-r from-gray-50 to-white">
+                <div>
+                  <h2 className="text-lg sm:text-2xl font-bold text-gray-900">
+                    {task ? "Edit Task" : "Create New Task"}
+                  </h2>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                    {task
+                      ? "Update task details"
+                      : "Fill in the details to create a new task"}
+                  </p>
+                </div>
                 <button
                   onClick={onClose}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-200 rounded-lg transition-colors flex-shrink-0"
                 >
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
@@ -132,93 +152,121 @@ export default function TaskModal({
               {/* Modal Body - Scrollable */}
               <form
                 onSubmit={handleSubmit}
-                className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1"
+                className="p-4 sm:p-6 space-y-5 sm:space-y-6 overflow-y-auto flex-1"
               >
                 {/* Title */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
-                    Task Title *
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Task Title <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={formData.title}
                     onChange={(e) => handleChange("title", e.target.value)}
-                    placeholder="Enter task title..."
-                    className={`w-full px-3 py-2 sm:px-4 sm:py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-colors ${
-                      errors.title ? "border-red-500" : "border-gray-300"
+                    placeholder="e.g., Design homepage mockup"
+                    className={`w-full px-4 py-2.5 sm:py-3 border-2 rounded-lg focus:ring-2 focus:ring-offset-0 focus:ring-blue-500 outline-none transition-all text-gray-900 placeholder:text-gray-400 ${
+                      errors.title
+                        ? "border-red-400 bg-red-50"
+                        : "border-gray-200 hover:border-gray-300"
                     }`}
                   />
                   {errors.title && (
-                    <p className="mt-1 text-xs sm:text-sm text-red-600">{errors.title}</p>
+                    <div className="mt-2 flex items-center gap-1.5 text-sm text-red-600">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.title}
+                    </div>
                   )}
                 </div>
 
                 {/* Description */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
                     Description
                   </label>
                   <textarea
                     value={formData.description}
-                    onChange={(e) => handleChange("description", e.target.value)}
-                    placeholder="Add task description..."
-                    rows={3}
-                    className="w-full px-3 py-2 sm:px-4 sm:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-colors resize-none"
+                    onChange={(e) =>
+                      handleChange("description", e.target.value)
+                    }
+                    placeholder="Add any additional details about this task..."
+                    rows={4}
+                    className="w-full px-4 py-2.5 sm:py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-offset-0 focus:ring-blue-500 outline-none transition-all resize-none hover:border-gray-300 text-gray-900 placeholder:text-gray-400"
                   />
                 </div>
 
-                {/* Row: Assignee & Project - Stacked on mobile */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Row: Assignee & Project */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
-                      <User className="w-4 h-4 inline mr-1" />
-                      Assignee
+                    <label className="block text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <User className="w-4 h-4 text-blue-600" />
+                      Assignee <span className="text-red-500">*</span>
                     </label>
                     <select
                       value={formData.user_id}
                       onChange={(e) => handleChange("user_id", e.target.value)}
-                      className={`w-full px-3 py-2 sm:px-4 sm:py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-colors ${
-                        errors.user_id ? "border-red-500" : "border-gray-300"
+                      className={`w-full px-4 py-2.5 sm:py-3 border-2 rounded-lg focus:ring-2 focus:ring-offset-0 focus:ring-blue-500 outline-none transition-all text-gray-900 ${
+                        errors.user_id
+                          ? "border-red-400 bg-red-50"
+                          : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
-                      <option value="">Select user...</option>
+                      <option value="">Select a user...</option>
                       {users.map((user) => (
-                        <option key={user.id} value={user.id}>{user.name}</option>
+                        <option key={user.id} value={user.id}>
+                          {user.name}
+                        </option>
                       ))}
                     </select>
                     {errors.user_id && (
-                      <p className="mt-1 text-xs sm:text-sm text-red-600">{errors.user_id}</p>
+                      <div className="mt-2 flex items-center gap-1.5 text-sm text-red-600">
+                        <AlertCircle className="w-4 h-4" />
+                        {errors.user_id}
+                      </div>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
-                      <Book className="w-4 h-4 inline mr-1" />
-                      Project
+                    <label className="block text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <Book className="w-4 h-4 text-purple-600" />
+                      Project <span className="text-red-500">*</span>
                     </label>
                     <select
                       value={formData.project_id}
-                      onChange={(e) => handleChange("project_id", e.target.value)}
-                      className={`w-full px-3 py-2 sm:px-4 sm:py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-colors ${
-                        errors.project_id ? "border-red-500" : "border-gray-300"
+                      onChange={(e) =>
+                        handleChange("project_id", e.target.value)
+                      }
+                      className={`w-full px-4 py-2.5 sm:py-3 border-2 rounded-lg focus:ring-2 focus:ring-offset-0 focus:ring-blue-500 outline-none transition-all text-gray-900 ${
+                        errors.project_id
+                          ? "border-red-400 bg-red-50"
+                          : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
-                      <option value="">Select project...</option>
+                      <option value="">Select a project...</option>
                       {projects.map((project) => (
-                        <option key={project.id} value={project.id}>{project.name}</option>
+                        <option key={project.id} value={project.id}>
+                          {project.name}
+                        </option>
                       ))}
                     </select>
+                    {errors.project_id && (
+                      <div className="mt-2 flex items-center gap-1.5 text-sm text-red-600">
+                        <AlertCircle className="w-4 h-4" />
+                        {errors.project_id}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Row: Status, Priority, Due Date - Responsive Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {/* Row: Status, Priority, Due Date */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Status</label>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Status
+                    </label>
                     <select
                       value={formData.status}
                       onChange={(e) => handleChange("status", e.target.value)}
-                      className="w-full px-3 py-2 sm:px-4 sm:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+                      className="w-full px-4 py-2.5 sm:py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-offset-0 focus:ring-blue-500 outline-none transition-all text-gray-900 hover:border-gray-300"
                     >
                       <option value="pending">Pending</option>
                       <option value="in_progress">In Progress</option>
@@ -227,14 +275,14 @@ export default function TaskModal({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
-                      <Flag className="w-4 h-4 inline mr-1" />
+                    <label className="block text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <Flag className="w-4 h-4 text-orange-600" />
                       Priority
                     </label>
                     <select
                       value={formData.priority}
                       onChange={(e) => handleChange("priority", e.target.value)}
-                      className="w-full px-3 py-2 sm:px-4 sm:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+                      className="w-full px-4 py-2.5 sm:py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-offset-0 focus:ring-blue-500 outline-none transition-all text-gray-900 hover:border-gray-300"
                     >
                       <option value="Low">Low</option>
                       <option value="Normal">Normal</option>
@@ -243,34 +291,48 @@ export default function TaskModal({
                   </div>
 
                   <div className="sm:col-span-2 md:col-span-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
-                      <CalendarIcon className="w-4 h-4 inline mr-1" />
+                    <label className="block text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <CalendarIcon className="w-4 h-4 text-green-600" />
                       Due Date
                     </label>
                     <input
                       type="date"
                       value={formData.due_date}
                       onChange={(e) => handleChange("due_date", e.target.value)}
-                      className="w-full px-3 py-2 sm:px-4 sm:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+                      className="w-full px-4 py-2.5 sm:py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-offset-0 focus:ring-blue-500 outline-none transition-all text-gray-900 hover:border-gray-300"
                     />
                   </div>
                 </div>
 
                 {errors.submit && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-600">{errors.submit}</p>
-                  </div>
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 bg-red-50 border-2 border-red-200 rounded-lg flex items-start gap-3"
+                  >
+                    <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-red-900">Error</p>
+                      <p className="text-sm text-red-700 mt-1">
+                        {errors.submit}
+                      </p>
+                    </div>
+                  </motion.div>
                 )}
               </form>
 
-              {/* Modal Footer - Stacked buttons on mobile */}
-              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-t border-gray-200 bg-gray-50 gap-3 shrink-0">
-                <div className="flex justify-center sm:justify-start">
+              {/* Modal Footer */}
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between px-4 py-4 sm:px-6 sm:py-5 border-t border-gray-100 bg-gray-50 gap-3 shrink-0">
+                <div>
                   {task && (
                     <button
                       type="button"
                       onClick={async () => {
-                        if (window.confirm("Are you sure you want to delete this task?")) {
+                        if (
+                          window.confirm(
+                            "Are you sure you want to delete this task? This action cannot be undone."
+                          )
+                        ) {
                           try {
                             await taskAPI.delete(task.id);
                             onSuccess();
@@ -280,27 +342,37 @@ export default function TaskModal({
                           }
                         }
                       }}
-                      className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                      className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors hover:text-red-700"
                     >
                       Delete Task
                     </button>
                   )}
                 </div>
 
-                <div className="flex flex-col-reverse sm:flex-row items-stretch gap-2">
+                <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                   <button
                     type="button"
                     onClick={onClose}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border-2 border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-all"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSubmit}
                     disabled={loading}
-                    className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    className="px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-sm hover:shadow-md flex items-center justify-center gap-2"
                   >
-                    {loading ? "Saving..." : task ? "Update Task" : "Create Task"}
+                    {loading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        {task ? "Update Task" : "Create Task"}
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
