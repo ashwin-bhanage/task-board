@@ -42,14 +42,14 @@ export default function Layout({ children, users, projects, onDataUpdate, onProj
       <AnimatePresence>
         {sidebarOpen && (
           <motion.aside
-            initial={{ x: -280 }}
+            initial={{ x: -320 }}
             animate={{
               x: 0,
-              width: sidebarCollapsed ? 72 : 256,
+              width: sidebarCollapsed ? 72 : 285, // 384px for mobile when expanded
             }}
-            exit={{ x: -280 }}
+            exit={{ x: -320 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed lg:static inset-y-0 left-0 z-50 bg-white border-r border-gray-200 flex flex-col"
+            className="fixed lg:static inset-y-0 left-0 z-50 bg-white border-r border-gray-200 flex flex-col w-96 lg:w-auto"
           >
             {/* Sidebar Header */}
             <div className="h-16 flex items-center justify-between px-4 lg:px-6 border-b border-gray-200">
@@ -66,7 +66,7 @@ export default function Layout({ children, users, projects, onDataUpdate, onProj
                     className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg object-contain"
                   />
                   <span className="font-semibold text-gray-900 text-sm lg:text-base">
-                    TaskBoard
+                    Ergo
                   </span>
                 </motion.div>
               )}
@@ -116,7 +116,7 @@ export default function Layout({ children, users, projects, onDataUpdate, onProj
             >
               <button
                 onClick={() => setShowAddMenu(!showAddMenu)}
-                className={`flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-sm hover:shadow-md ${
+                className={`flex items-center justify-center gap-2 bg-linear-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-sm hover:shadow-md ${
                   sidebarCollapsed ? "w-10 h-10 p-0" : "w-full py-2 lg:py-2.5"
                 }`}
               >
@@ -149,7 +149,7 @@ export default function Layout({ children, users, projects, onDataUpdate, onProj
                     onClick={() => handleAddMenuClick("user")}
                     className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0"
                   >
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
                       <UserRound className="w-4 h-4 text-blue-600" />
                     </div>
                     <div className="text-left">
@@ -163,7 +163,7 @@ export default function Layout({ children, users, projects, onDataUpdate, onProj
                     onClick={() => handleAddMenuClick("project")}
                     className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-purple-50 transition-colors"
                   >
-                    <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center shrink-0">
                       <LayoutDashboard className="w-4 h-4 text-purple-600" />
                     </div>
                     <div className="text-left">
