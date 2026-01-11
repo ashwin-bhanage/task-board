@@ -10,19 +10,14 @@ import {
   CalendarClock,
   Loader,
   CircleCheckBig,
-  ListTodoIcon,
-  UserRound,
-  LayoutDashboard,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { taskAPI, projectAPI, userAPI } from "../services/api";
 import TaskModal from "../modals/TaskModal.jsx";
-import UserModal from "../modals/UserModal.jsx";
-import ProjectModal from "../modals/ProjectModal.jsx";
 import { toast } from "sonner";
 import LoadingSkeleton from "./LoadingSkeleton.jsx";
 
-// Phase B: Step 2 & 7 - Add Imports
+// Drag and Drop Imports
 import {
   DndContext,
   DragOverlay,
@@ -39,9 +34,6 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
   const [users, setUsers] = useState([]);
   const [projects, setProjects] = useState([]);
   const [activeTab, setActiveTab] = useState("Pending");
-  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
-  const [showBoardAddMenu, setShowBoardAddMenu] = useState(false);
   const [filters, setFilters] = useState({
     assignee: null,
     priority: null,
@@ -52,6 +44,13 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [newTaskStatus, setNewTaskStatus] = useState("pending");
+  const [activeId, setActiveId] = useState(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    })
+  );
 
   useEffect(() => {
     if (selectedProject) {
@@ -74,6 +73,7 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
       setProjects(projectsData);
     } catch (error) {
       console.error("Failed to fetch data:", error);
+      toast.error("Failed to load data");
     } finally {
       setLoading(false);
     }
@@ -91,28 +91,15 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
   };
 
   const handleModalSuccess = async () => {
-    // Close the modal first
     setIsModalOpen(false);
     setEditingTask(null);
-
-    // Refetch data with a small delay to ensure backend consistency
     await new Promise((resolve) => setTimeout(resolve, 100));
     await fetchData();
-
-    // Notify parent component
     if (onDataUpdate) onDataUpdate();
     toast.success(
       editingTask ? "Task updated successfully" : "Task added successfully"
     );
   };
-
-  // Phase B: Step 3 - Add Drag Handlers
-  const [activeId, setActiveId] = useState(null);
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    })
-  );
 
   const handleDragStart = (event) => {
     setActiveId(event.active.id);
@@ -125,14 +112,14 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
       return;
     }
     const taskId = active.id;
-    const newStatus = over.id; // 'pending', 'in_progress', 'completed'
+    const newStatus = over.id;
 
     const task = tasks.find((t) => t.id === taskId);
 
     if (task && task.status !== newStatus) {
       try {
         await taskAPI.update(taskId, { status: newStatus });
-        fetchData();
+        await fetchData();
         toast.success("Task moved successfully");
       } catch (error) {
         console.error("Failed to update task:", error);
@@ -148,7 +135,6 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
     completed: tasks.filter((t) => t.status === "completed"),
   };
 
-  // Filter logic
   const filteredTasksByStatus = {
     pending: filterTasks(tasksByStatus.pending),
     in_progress: filterTasks(tasksByStatus.in_progress),
@@ -163,7 +149,6 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
       if (filters.dateRange) {
         const today = new Date();
         const dueDate = task.due_date ? new Date(task.due_date) : null;
-
         if (filters.dateRange === "overdue" && (!dueDate || dueDate >= today))
           return false;
         if (
@@ -183,24 +168,23 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
   }
 
   if (loading) {
-    return <LoadingSkeleton />
+    return <LoadingSkeleton />;
   }
 
   if (!selectedProject) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-4">
-        <Rows2 className="w-12 h-12 lg:w-16 lg:h-16 text-gray-300 mb-4" />
-        <h2 className="text-lg lg:text-xl font-semibold text-gray-700 mb-2">
+      <div className="flex flex-col items-center justify-center h-full p-4 dark:bg-black">
+        <Rows2 className="w-12 h-12 lg:w-16 lg:h-16 text-gray-300 dark:text-neutral-800 mb-4" />
+        <h2 className="text-lg lg:text-xl font-semibold text-gray-700 dark:text-neutral-300 mb-2">
           No Project Selected
         </h2>
-        <p className="text-sm lg:text-base text-gray-500 text-center">
+        <p className="text-sm lg:text-base text-gray-500 dark:text-neutral-500 text-center">
           Select a project from the sidebar to view tasks
         </p>
       </div>
     );
   }
 
-  // Phase B: Step 4 - Wrap Return with DndContext
   return (
     <DndContext
       sensors={sensors}
@@ -208,24 +192,23 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex flex-col h-full bg-gray-50">
-        {/* Board Header */}
-        <div className="bg-white border-b border-gray-200 px-3 lg:px-6 py-3 lg:py-4">
+      <div className="flex flex-col h-full bg-gray-50 dark:bg-black transition-colors">
+        {/* Header Section */}
+        <div className="bg-white dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-800 px-3 lg:px-6 py-3 lg:py-4">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 lg:gap-0 mb-3 lg:mb-4">
             <div className="flex items-center gap-2">
               <span className="text-violet-400">
                 <Rows2 className="w-5 h-5 lg:w-6 lg:h-6" />
               </span>
-              <h1 className="text-lg lg:text-2xl font-bold text-gray-900 truncate">
+              <h1 className="text-lg lg:text-2xl font-bold text-gray-900 dark:text-white truncate">
                 {selectedProject.name}
               </h1>
-              <button className="p-1 hover:bg-gray-100 rounded hidden lg:block">
-                <PenLine className="w-4 h-4 text-gray-400" />
+              <button className="p-1 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded hidden lg:block">
+                <PenLine className="w-4 h-4 text-gray-400 dark:text-neutral-500" />
               </button>
             </div>
-
             <div className="flex items-center gap-2">
-              <button className="px-3 lg:px-4 py-1.5 lg:py-2 text-xs lg:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+              <button className="px-3 lg:px-4 py-1.5 lg:py-2 text-xs lg:text-sm font-medium text-gray-700 dark:text-neutral-300 bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors">
                 Share
               </button>
             </div>
@@ -233,26 +216,14 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
             <div className="flex items-center gap-4 lg:gap-6 overflow-x-auto scrollbar-hide">
-              <TabButton
-                label="List"
-                active={activeTab === "List"}
-                onClick={() => setActiveTab("List")}
-              />
-              <TabButton
-                label="Board"
-                active={activeTab === "Board"}
-                onClick={() => setActiveTab("Board")}
-              />
-              <TabButton
-                label="Calendar"
-                active={activeTab === "Calendar"}
-                onClick={() => setActiveTab("Calendar")}
-              />
-              <TabButton
-                label="Files"
-                active={activeTab === "Files"}
-                onClick={() => setActiveTab("Files")}
-              />
+              {["List", "Board", "Calendar", "Files"].map((tab) => (
+                <TabButton
+                  key={tab}
+                  label={tab}
+                  active={activeTab === tab}
+                  onClick={() => setActiveTab(tab)}
+                />
+              ))}
             </div>
 
             <div className="flex items-center gap-2 lg:gap-3 overflow-visible flex-wrap">
@@ -301,13 +272,13 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
                 showDropdown={showFilterDropdown}
                 setShowDropdown={setShowFilterDropdown}
               />
-              <button className="flex items-center gap-2 px-2 lg:px-3 py-1.5 lg:py-2 text-xs lg:text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 whitespace-nowrap">
+              <button className="flex items-center gap-2 px-2 lg:px-3 py-1.5 lg:py-2 text-xs lg:text-sm font-medium text-gray-700 dark:text-neutral-300 border border-gray-300 dark:border-neutral-700 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-800 whitespace-nowrap">
                 <Filter className="w-3 h-3 lg:w-4 lg:h-4" />
                 <span className="hidden lg:inline">Advance Filters</span>
               </button>
             </div>
 
-            <div className="md:hidden">
+            {/* <div className="md:hidden">
               <button
                 onClick={() => handleAddTask("pending")}
                 className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2"
@@ -315,45 +286,34 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
                 <Plus className="w-4 h-4" />
                 Add Task
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
 
-        {/* Kanban Columns */}
+        {/* Main Content Area */}
         <div className="flex-1 overflow-hidden">
           {/* Mobile View */}
           <div className="lg:hidden h-full flex flex-col">
-            <div className="flex border-b border-gray-200 bg-white px-3">
-              <button
-                onClick={() => setActiveTab("Pending")}
-                className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === "Pending"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-600"
-                }`}
-              >
-                Pending ({filteredTasksByStatus.pending.length})
-              </button>
-              <button
-                onClick={() => setActiveTab("In Progress")}
-                className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === "In Progress"
-                    ? "border-yellow-600 text-yellow-600"
-                    : "border-transparent text-gray-600"
-                }`}
-              >
-                In Progress ({filteredTasksByStatus.in_progress.length})
-              </button>
-              <button
-                onClick={() => setActiveTab("Completed")}
-                className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === "Completed"
-                    ? "border-green-600 text-green-600"
-                    : "border-transparent text-gray-600"
-                }`}
-              >
-                Done ({filteredTasksByStatus.completed.length})
-              </button>
+            <div className="flex border-b border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3">
+              {["Pending", "In Progress", "Completed"].map((label) => (
+                <button
+                  key={label}
+                  onClick={() => setActiveTab(label)}
+                  className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === label
+                      ? "border-blue-600 text-blue-600"
+                      : "border-transparent text-gray-600 dark:text-neutral-400"
+                  }`}
+                >
+                  {label} (
+                  {
+                    filteredTasksByStatus[
+                      label.toLowerCase().replace(" ", "_")
+                    ].length
+                  }
+                  )
+                </button>
+              ))}
             </div>
             <div className="flex-1 overflow-y-auto p-3">
               {activeTab === "Pending" && (
@@ -386,7 +346,7 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
             </div>
           </div>
 
-          {/* Desktop View - Phase B: Step 5 - Make Desktop Columns Droppable */}
+          {/* Desktop View */}
           <div className="hidden lg:block h-full overflow-x-auto overflow-y-hidden">
             <div className="flex gap-6 p-6 min-w-max h-full">
               <DroppableColumn
@@ -422,7 +382,8 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
           </div>
         </div>
       </div>
-      {/* NEW: DragOverlay */}
+
+      {/* Drag Overlay */}
       <DragOverlay>
         {activeId ? (
           <div className="opacity-80 rotate-3 cursor-grabbing scale-105 transition-transform">
@@ -458,23 +419,19 @@ function MobileColumn({ tasks, users, onAddTask, onEditTask, emptyMessage }) {
   return (
     <div className="space-y-3">
       {tasks.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-400 text-sm">{emptyMessage}</p>
-          <p className="text-gray-400 text-sm">Click "Add Task" to get started</p>
+        <div className="text-center py-12 dark:bg-neutral-900/50 rounded-xl">
+          <p className="text-gray-400 dark:text-neutral-500 text-sm">
+            {emptyMessage}
+          </p>
         </div>
       ) : (
         tasks.map((task) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            users={users}
-            onEdit={onEditTask}
-          />
+          <TaskCard key={task.id} task={task} users={users} onEdit={onEditTask} />
         ))
       )}
       <button
         onClick={onAddTask}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm text-gray-600 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:text-blue-600 transition-colors"
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm text-gray-600 dark:text-neutral-400 bg-white dark:bg-neutral-900 border-2 border-dashed border-gray-300 dark:border-neutral-800 rounded-lg hover:border-blue-400 hover:text-blue-600 transition-colors"
       >
         <Plus className="w-4 h-4" />
         <span>Add Task</span>
@@ -483,7 +440,7 @@ function MobileColumn({ tasks, users, onAddTask, onEditTask, emptyMessage }) {
   );
 }
 
-// Phase B: Step 6 - Add DroppableColumn and DraggableTask
+// Droppable Column Component
 function DroppableColumn({
   id,
   title,
@@ -499,11 +456,11 @@ function DroppableColumn({
   const getStatusColor = () => {
     switch (statusColor) {
       case "yellow":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500";
       case "green":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-500";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-800 dark:bg-neutral-800 dark:text-neutral-400";
     }
   };
 
@@ -512,7 +469,9 @@ function DroppableColumn({
       <div className="flex items-center justify-between mb-4">
         <button className="flex items-center gap-2">
           <span className="text-lg">{icon}</span>
-          <span className="font-semibold text-gray-900 text-base">{title}</span>
+          <span className="font-semibold text-gray-900 dark:text-white text-base">
+            {title}
+          </span>
         </button>
         <div className="flex items-center gap-2">
           <span
@@ -520,21 +479,12 @@ function DroppableColumn({
           >
             {tasks.length}
           </span>
-          <button className="p-1 hover:bg-gray-100 rounded">
-            <span className="text-gray-400">⋯</span>
+          <button className="p-1 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded">
+            <span className="text-gray-400 dark:text-neutral-500">⋯</span>
           </button>
         </div>
       </div>
-
       <div className="flex-1 space-y-3 overflow-y-auto">
-        {/* Improved Empty State Logic */}
-        {tasks.length === 0 && (
-          <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
-            <div className="text-4xl mb-3">📋</div>
-            <p className="text-gray-400 text-sm">No tasks here</p>
-          </div>
-        )}
-
         {tasks.map((task) => (
           <DraggableTask
             key={task.id}
@@ -543,10 +493,9 @@ function DroppableColumn({
             onEdit={onEditTask}
           />
         ))}
-
         <button
           onClick={onAddTask}
-          className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-600 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:text-blue-600 transition-colors"
+          className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-600 dark:text-neutral-400 bg-white dark:bg-neutral-900 border-2 border-dashed border-gray-300 dark:border-neutral-800 rounded-lg hover:border-blue-400 hover:text-blue-600 transition-colors"
         >
           <Plus className="w-4 h-4" />
           <span>Add Task</span>
@@ -556,6 +505,7 @@ function DroppableColumn({
   );
 }
 
+// Draggable Task Component
 function DraggableTask({ task, users, onEdit }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
@@ -574,20 +524,23 @@ function DraggableTask({ task, users, onEdit }) {
   const getPriorityColor = (priority) => {
     switch (priority) {
       case "High":
-        return "bg-red-100 text-red-700";
+        return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-500";
       case "Normal":
-        return "bg-blue-100 text-blue-700";
+        return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-500";
       case "Low":
-        return "bg-gray-100 text-gray-700";
+        return "bg-gray-100 text-gray-700 dark:bg-neutral-800 dark:text-neutral-400";
       default:
-        return "bg-gray-100 text-gray-700";
+        return "bg-gray-100 text-gray-700 dark:bg-neutral-800 dark:text-neutral-400";
     }
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return "No due date";
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
   };
 
   return (
@@ -596,25 +549,27 @@ function DraggableTask({ task, users, onEdit }) {
       style={style}
       {...listeners}
       {...attributes}
-      className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 cursor-grab active:cursor-grabbing"
+      className="bg-white dark:bg-neutral-900 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-neutral-800 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
       onClick={() => onEdit(task)}
     >
-      <h3 className="font-medium text-gray-900 mb-3 text-base">{task.title}</h3>
+      <h3 className="font-medium text-gray-900 dark:text-white mb-3 text-base">
+        {task.title}
+      </h3>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {assignedUser ? (
             <>
-              <div className="w-6 h-6 bg-linear-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+              <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
                 {assignedUser.name[0].toUpperCase()}
               </div>
-              <span className="text-xs text-gray-600">
+              <span className="text-xs text-gray-600 dark:text-neutral-400">
                 {assignedUser.name.split(" ")[0]}
               </span>
             </>
           ) : null}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-gray-500 dark:text-neutral-500">
             {formatDate(task.due_date)}
           </span>
           <span
@@ -630,6 +585,7 @@ function DraggableTask({ task, users, onEdit }) {
   );
 }
 
+// Tab Button Component
 function TabButton({ label, active, onClick }) {
   return (
     <button
@@ -637,7 +593,7 @@ function TabButton({ label, active, onClick }) {
       className={`pb-1 text-xs lg:text-sm font-medium transition-colors whitespace-nowrap ${
         active
           ? "text-blue-600 border-b-2 border-blue-600"
-          : "text-gray-600 hover:text-gray-900 border-b-2 border-transparent"
+          : "text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white border-b-2 border-transparent"
       }`}
     >
       {label}
@@ -645,6 +601,7 @@ function TabButton({ label, active, onClick }) {
   );
 }
 
+// Filter Button Component
 function FilterButton({
   icon: Icon,
   label,
@@ -664,28 +621,28 @@ function FilterButton({
         onClick={() =>
           setShowDropdown(showDropdown === filterKey ? null : filterKey)
         }
-        className="flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        className="flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-neutral-300 border border-gray-300 dark:border-neutral-700 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors"
       >
         <Icon className="w-4 h-4 shrink-0" />
         <span className="hidden sm:inline whitespace-nowrap">{label}</span>
-        <span className="text-gray-500 text-xs hidden sm:inline whitespace-nowrap">
+        <span className="text-gray-500 dark:text-neutral-500 text-xs hidden sm:inline whitespace-nowrap">
           {displayValue}
         </span>
-        <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+        <ChevronDown className="w-4 h-4 text-gray-400 dark:text-neutral-500 shrink-0" />
       </button>
 
       {showDropdown === filterKey && (
         <>
-          <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl py-2 z-50 min-w-48 max-w-xs sm:right-0 sm:left-auto">
+          <div className="absolute top-full left-0 mt-2 bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-lg shadow-xl py-1 z-50 min-w-48 max-w-xs sm:right-0 sm:left-auto">
             <button
               onClick={() => {
                 setFilters({ ...filters, [filterKey]: null });
                 setShowDropdown(null);
               }}
-              className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors ${
+              className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors ${
                 !value
-                  ? "text-blue-600 font-medium bg-blue-50"
-                  : "text-gray-700"
+                  ? "text-blue-600 font-medium bg-blue-50 dark:bg-blue-900/20"
+                  : "text-gray-700 dark:text-neutral-300"
               }`}
             >
               All
@@ -697,10 +654,10 @@ function FilterButton({
                   setFilters({ ...filters, [filterKey]: option.value });
                   setShowDropdown(null);
                 }}
-                className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors ${
+                className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors ${
                   value === option.value
-                    ? "text-blue-600 font-medium bg-blue-50"
-                    : "text-gray-700"
+                    ? "text-blue-600 font-medium bg-blue-50 dark:bg-blue-900/20"
+                    : "text-gray-700 dark:text-neutral-300"
                 }`}
               >
                 {option.label}
@@ -717,54 +674,61 @@ function FilterButton({
   );
 }
 
+// Task Card Component (for mobile and drag overlay)
 function TaskCard({ task, users, onEdit }) {
   const assignedUser = users.find((u) => u.id === task.user_id);
+
   const getPriorityColor = (priority) => {
     switch (priority) {
       case "High":
-        return "bg-red-100 text-red-700";
+        return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-500";
       case "Normal":
-        return "bg-blue-100 text-blue-700";
+        return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-500";
       case "Low":
-        return "bg-gray-100 text-gray-700";
+        return "bg-gray-100 text-gray-700 dark:bg-neutral-800 dark:text-neutral-400";
       default:
-        return "bg-gray-100 text-gray-700";
+        return "bg-gray-100 text-gray-700 dark:bg-neutral-800 dark:text-neutral-400";
     }
   };
+
   const formatDate = (dateString) => {
     if (!dateString) return "No due date";
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
   };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       onClick={() => onEdit(task)}
-      className="bg-white rounded-lg p-3 lg:p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+      className="bg-white dark:bg-neutral-900 rounded-lg p-3 lg:p-4 shadow-sm border border-gray-200 dark:border-neutral-800 hover:shadow-md transition-shadow cursor-pointer"
     >
-      <h3 className="font-medium text-gray-900 mb-2 lg:mb-3 text-sm lg:text-base line-clamp-2">
+      <h3 className="font-medium text-gray-900 dark:text-white mb-2 lg:mb-3 text-sm lg:text-base line-clamp-2">
         {task.title}
       </h3>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center gap-2">
           {assignedUser ? (
             <>
-              <div className="w-5 h-5 lg:w-6 lg:h-6 bg-linear-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+              <div className="w-5 h-5 lg:w-6 lg:h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
                 {assignedUser.name[0].toUpperCase()}
               </div>
-              <span className="text-xs text-gray-600 truncate">
+              <span className="text-xs text-gray-600 dark:text-neutral-400 truncate">
                 {assignedUser.name.split(" ")[0]}
               </span>
             </>
           ) : (
-            <button className="text-xs text-gray-400 hover:text-gray-600">
+            <button className="text-xs text-gray-400 dark:text-neutral-500 hover:text-gray-600 dark:hover:text-neutral-300">
               Assign
             </button>
           )}
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-gray-500 dark:text-neutral-500">
             {formatDate(task.due_date)}
           </span>
           <span

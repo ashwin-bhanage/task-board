@@ -1,73 +1,72 @@
-import { useState } from 'react'
-import { X, FolderPlus } from 'lucide-react'
-import { motion, AnimatePresence } from 'motion/react'
-import { projectAPI } from '../services/api'
-import { toast } from 'sonner'
-
+import { useState } from "react";
+import { X, FolderPlus } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { projectAPI } from "../services/api";
+import { toast } from "sonner";
 
 export default function ProjectModal({ isOpen, onClose, users, onSuccess }) {
   const [formData, setFormData] = useState({
-    name: '',
-    created_by: ''
-  })
-  const [errors, setErrors] = useState({})
-  const [loading, setLoading] = useState(false)
+    name: "",
+    created_by: "",
+  });
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const validate = () => {
-    const newErrors = {}
+    const newErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Project name is required'
+      newErrors.name = "Project name is required";
     }
 
     if (!formData.created_by) {
-      newErrors.created_by = 'Please select a creator'
+      newErrors.created_by = "Please select a creator";
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    if (!validate()) return
+    if (!validate()) return;
 
-    setLoading(true)
+    setLoading(true);
     try {
       await projectAPI.create(
         { name: formData.name.trim() },
         parseInt(formData.created_by)
-      )
+      );
 
       // Reset form
-      setFormData({ name: '', created_by: '' })
-      toast.success('Project created successfully');
-      onSuccess()
-      onClose()
+      setFormData({ name: "", created_by: "" });
+      toast.success("Project created successfully");
+      onSuccess();
+      onClose();
     } catch (error) {
-      console.error('Failed to create project:', error)
-      toast.error(error.message || 'Failed to create project');
-      setErrors({ submit: error.message || 'Failed to create project' })
+      console.error("Failed to create project:", error);
+      toast.error(error.message || "Failed to create project");
+      setErrors({ submit: error.message || "Failed to create project" });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }))
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
-  }
+  };
 
   const handleClose = () => {
-    setFormData({ name: '', created_by: '' })
-    setErrors({})
-    onClose()
-  }
+    setFormData({ name: "", created_by: "" });
+    setErrors({});
+    onClose();
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <AnimatePresence>
@@ -88,16 +87,18 @@ export default function ProjectModal({ isOpen, onClose, users, onSuccess }) {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-xl shadow-2xl w-full max-w-md"
+              className="bg-white dark:bg-neutral-900 rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-200 dark:border-neutral-800"
             >
               {/* Modal Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                <h2 className="text-xl font-bold text-gray-900">Create New Project</h2>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-neutral-800">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Create New Project
+                </h2>
                 <button
                   onClick={handleClose}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
                 >
-                  <X className="w-5 h-5 text-gray-500" />
+                  <X className="w-5 h-5 text-gray-500 dark:text-neutral-400" />
                 </button>
               </div>
 
@@ -105,62 +106,78 @@ export default function ProjectModal({ isOpen, onClose, users, onSuccess }) {
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 {/* Project Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-2">
                     <FolderPlus className="w-4 h-4 inline mr-1" />
                     Project Name *
                   </label>
                   <input
                     type="text"
                     value={formData.name}
-                    onChange={(e) => handleChange('name', e.target.value)}
+                    onChange={(e) => handleChange("name", e.target.value)}
                     placeholder="Enter project name..."
-                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors ${
-                      errors.name ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-colors dark:bg-neutral-800 dark:text-white ${
+                      errors.name
+                        ? "border-red-500"
+                        : "border-gray-300 dark:border-neutral-700"
                     }`}
                   />
                   {errors.name && (
-                    <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                      {errors.name}
+                    </p>
                   )}
                 </div>
 
                 {/* Created By */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-2">
                     Created By *
                   </label>
                   <select
                     value={formData.created_by}
-                    onChange={(e) => handleChange('created_by', e.target.value)}
-                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors ${
-                      errors.created_by ? 'border-red-500' : 'border-gray-300'
+                    onChange={(e) => handleChange("created_by", e.target.value)}
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-colors dark:bg-neutral-800 dark:text-white ${
+                      errors.created_by
+                        ? "border-red-500"
+                        : "border-gray-300 dark:border-neutral-700"
                     }`}
                   >
-                    <option value="">Select creator...</option>
-                    {users.map(user => (
-                      <option key={user.id} value={user.id}>
+                    <option value="" className="dark:bg-neutral-900">
+                      Select creator...
+                    </option>
+                    {users.map((user) => (
+                      <option
+                        key={user.id}
+                        value={user.id}
+                        className="dark:bg-neutral-900"
+                      >
                         {user.name}
                       </option>
                     ))}
                   </select>
                   {errors.created_by && (
-                    <p className="mt-1 text-sm text-red-600">{errors.created_by}</p>
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                      {errors.created_by}
+                    </p>
                   )}
                 </div>
 
                 {/* Submit Error */}
                 {errors.submit && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-600">{errors.submit}</p>
+                  <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                      {errors.submit}
+                    </p>
                   </div>
                 )}
               </form>
 
               {/* Modal Footer */}
-              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
+              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-neutral-800/50">
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 dark:text-neutral-300 dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-neutral-700 rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
@@ -169,7 +186,7 @@ export default function ProjectModal({ isOpen, onClose, users, onSuccess }) {
                   disabled={loading}
                   className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Creating...' : 'Create Project'}
+                  {loading ? "Creating..." : "Create Project"}
                 </button>
               </div>
             </motion.div>
@@ -177,5 +194,5 @@ export default function ProjectModal({ isOpen, onClose, users, onSuccess }) {
         </>
       )}
     </AnimatePresence>
-  )
+  );
 }

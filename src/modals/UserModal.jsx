@@ -7,69 +7,72 @@ import { toast } from 'sonner'
 
 export default function UserModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
-    name: '',
-    email: ''
-  })
-  const [errors, setErrors] = useState({})
-  const [loading, setLoading] = useState(false)
+    name: "",
+    email: "",
+  });
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const validate = () => {
-    const newErrors = {}
+    const newErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Name is required'
+      newErrors.name = "Name is required";
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required'
+      newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Invalid email format'
+      newErrors.email = "Invalid email format";
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    if (!validate()) return
+    if (!validate()) return;
 
-    setLoading(true)
+    setLoading(true);
     try {
       await userAPI.create({
         name: formData.name.trim(),
-        email: formData.email.trim()
-      })
+        email: formData.email.trim(),
+      });
 
       // Reset form
-      setFormData({ name: '', email: '' })
-      toast.success('User added successfully')
-      onSuccess()
-      onClose()
+      setFormData({ name: "", email: "" });
+      toast.success("User added successfully");
+      onSuccess();
+      onClose();
     } catch (error) {
-      console.error('Failed to create user:', error)
-      toast.error(error.message || 'Failed to create user');
-      setErrors({ submit: error.message || 'Failed to create user. Email might already exist.' })
+      console.error("Failed to create user:", error);
+      toast.error(error.message || "Failed to create user");
+      setErrors({
+        submit:
+          error.message || "Failed to create user. Email might already exist.",
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }))
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
-  }
+  };
 
   const handleClose = () => {
-    setFormData({ name: '', email: '' })
-    setErrors({})
-    onClose()
-  }
+    setFormData({ name: "", email: "" });
+    setErrors({});
+    onClose();
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <AnimatePresence>
@@ -90,11 +93,13 @@ export default function UserModal({ isOpen, onClose, onSuccess }) {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-xl shadow-2xl w-full max-w-md"
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md"
             >
               {/* Modal Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                <h2 className="text-xl font-bold text-gray-900">Add New User</h2>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Add New User
+                </h2>
                 <button
                   onClick={handleClose}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -114,10 +119,10 @@ export default function UserModal({ isOpen, onClose, onSuccess }) {
                   <input
                     type="text"
                     value={formData.name}
-                    onChange={(e) => handleChange('name', e.target.value)}
+                    onChange={(e) => handleChange("name", e.target.value)}
                     placeholder="Enter user's full name..."
                     className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors ${
-                      errors.name ? 'border-red-500' : 'border-gray-300'
+                      errors.name ? "border-red-500" : "border-gray-300"
                     }`}
                   />
                   {errors.name && (
@@ -134,10 +139,10 @@ export default function UserModal({ isOpen, onClose, onSuccess }) {
                   <input
                     type="email"
                     value={formData.email}
-                    onChange={(e) => handleChange('email', e.target.value)}
+                    onChange={(e) => handleChange("email", e.target.value)}
                     placeholder="user@example.com"
                     className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors ${
-                      errors.email ? 'border-red-500' : 'border-gray-300'
+                      errors.email ? "border-red-500" : "border-gray-300"
                     }`}
                   />
                   {errors.email && (
@@ -158,7 +163,7 @@ export default function UserModal({ isOpen, onClose, onSuccess }) {
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 dark:text-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600 rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
@@ -167,7 +172,7 @@ export default function UserModal({ isOpen, onClose, onSuccess }) {
                   disabled={loading}
                   className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Creating...' : 'Create User'}
+                  {loading ? "Creating..." : "Create User"}
                 </button>
               </div>
             </motion.div>
@@ -175,5 +180,5 @@ export default function UserModal({ isOpen, onClose, onSuccess }) {
         </>
       )}
     </AnimatePresence>
-  )
+  );
 }
