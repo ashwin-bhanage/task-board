@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { X, Mail, User as UserIcon } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 import { userAPI } from '../services/api'
+import { toast } from 'sonner'
+
 
 export default function UserModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -42,10 +44,12 @@ export default function UserModal({ isOpen, onClose, onSuccess }) {
 
       // Reset form
       setFormData({ name: '', email: '' })
+      toast.success('User added successfully')
       onSuccess()
       onClose()
     } catch (error) {
       console.error('Failed to create user:', error)
+      toast.error(error.message || 'Failed to create user');
       setErrors({ submit: error.message || 'Failed to create user. Email might already exist.' })
     } finally {
       setLoading(false)

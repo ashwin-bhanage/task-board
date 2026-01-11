@@ -19,6 +19,8 @@ import { taskAPI, projectAPI, userAPI } from "../services/api";
 import TaskModal from "../modals/TaskModal.jsx";
 import UserModal from "../modals/UserModal.jsx";
 import ProjectModal from "../modals/ProjectModal.jsx";
+import { toast } from "sonner";
+import LoadingSkeleton from "./LoadingSkeleton.jsx";
 
 // Phase B: Step 2 & 7 - Add Imports
 import {
@@ -99,6 +101,9 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
 
     // Notify parent component
     if (onDataUpdate) onDataUpdate();
+    toast.success(
+      editingTask ? "Task updated successfully" : "Task added successfully"
+    );
   };
 
   // Phase B: Step 3 - Add Drag Handlers
@@ -128,8 +133,10 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
       try {
         await taskAPI.update(taskId, { status: newStatus });
         fetchData();
+        toast.success("Task moved successfully");
       } catch (error) {
         console.error("Failed to update task:", error);
+        toast.error("Failed to move task");
       }
     }
     setActiveId(null);
@@ -176,13 +183,7 @@ export default function KanbanBoard({ selectedProject, onDataUpdate }) {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-gray-500 text-sm lg:text-base">
-          Loading tasks...
-        </div>
-      </div>
-    );
+    return <LoadingSkeleton />
   }
 
   if (!selectedProject) {
@@ -459,6 +460,7 @@ function MobileColumn({ tasks, users, onAddTask, onEditTask, emptyMessage }) {
       {tasks.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-400 text-sm">{emptyMessage}</p>
+          <p className="text-gray-400 text-sm">Click "Add Task" to get started</p>
         </div>
       ) : (
         tasks.map((task) => (
@@ -504,6 +506,7 @@ function DroppableColumn({
         return "bg-gray-100 text-gray-800";
     }
   };
+
   return (
     <div ref={setNodeRef} className="flex flex-col w-80 shrink-0">
       <div className="flex items-center justify-between mb-4">
@@ -522,7 +525,16 @@ function DroppableColumn({
           </button>
         </div>
       </div>
+
       <div className="flex-1 space-y-3 overflow-y-auto">
+        {/* Improved Empty State Logic */}
+        {tasks.length === 0 && (
+          <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+            <div className="text-4xl mb-3">📋</div>
+            <p className="text-gray-400 text-sm">No tasks here</p>
+          </div>
+        )}
+
         {tasks.map((task) => (
           <DraggableTask
             key={task.id}
@@ -531,6 +543,7 @@ function DroppableColumn({
             onEdit={onEditTask}
           />
         ))}
+
         <button
           onClick={onAddTask}
           className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-600 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:text-blue-600 transition-colors"

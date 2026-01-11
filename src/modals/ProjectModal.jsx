@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { X, FolderPlus } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 import { projectAPI } from '../services/api'
+import { toast } from 'sonner'
+
 
 export default function ProjectModal({ isOpen, onClose, users, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -40,10 +42,12 @@ export default function ProjectModal({ isOpen, onClose, users, onSuccess }) {
 
       // Reset form
       setFormData({ name: '', created_by: '' })
+      toast.success('Project created successfully');
       onSuccess()
       onClose()
     } catch (error) {
       console.error('Failed to create project:', error)
+      toast.error(error.message || 'Failed to create project');
       setErrors({ submit: error.message || 'Failed to create project' })
     } finally {
       setLoading(false)

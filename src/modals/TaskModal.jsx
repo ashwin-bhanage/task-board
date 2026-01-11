@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { taskAPI } from "../services/api.js";
+import { toast } from "sonner";
 
 export default function TaskModal({
   isOpen,
@@ -87,12 +88,15 @@ export default function TaskModal({
       }
 
       // Wait a brief moment to ensure the backend has processed the request
-      await new Promise(resolve => setTimeout(resolve, 300));
-
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      toast.success(
+        task ? "Task updated successfully" : "Task created successfully"
+      );
       onSuccess();
       onClose();
     } catch (error) {
       console.error("Failed to save task:", error);
+      toast.error(error.message || "Failed to save task");
       setErrors({ submit: error.message || "Failed to save task" });
     } finally {
       setLoading(false);
@@ -335,10 +339,12 @@ export default function TaskModal({
                         ) {
                           try {
                             await taskAPI.delete(task.id);
+                            toast.success("Task deleted successfully"); // Added feedback
                             onSuccess();
                             onClose();
                           } catch (error) {
                             console.error("Failed to delete task:", error);
+                            toast.error("Failed to delete task"); // Added error feedback
                           }
                         }
                       }}
