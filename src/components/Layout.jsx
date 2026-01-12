@@ -18,7 +18,7 @@ import {
   Moon,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import Logo from "../../assets/Logo.png";
+import Logo from "../assets/Logo.png";
 import UserModal from "../modals/UserModal";
 import ProjectModal from "../modals/ProjectModal";
 import { useTheme } from "../context/ThemeContext";
